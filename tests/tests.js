@@ -2,16 +2,6 @@ $(function()
 {
 	module('Initialization');
 
-	test('Content populated', function()
-	{
-		$('textarea').wizziwig();
-
-		strictEqual(
-			$('textarea').data('wizziwig.wizziwig').body.html(),
-			'<p>Content</p>'
-		);
-	});
-
 	asyncTest('Events', function()
 	{
 		$('textarea')
@@ -27,5 +17,19 @@ $(function()
 				ok(true, 'Got post-init');
 			})
 			.wizziwig();
+	});
+
+	asyncTest('Content populated', function()
+	{
+		$('textarea')
+			.on('wizziwigpostinit', function()
+			{
+				start();
+				strictEqual(
+					$($('iframe').prop('contentDocument').body).html(),
+					'<p>Content</p>'
+				);
+			})
+			.wizziwig()
 	});
 });

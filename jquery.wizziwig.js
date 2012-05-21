@@ -1,3 +1,15 @@
+/**
+ * Wizziwig core plugin.
+ *
+ * Do not interact with the Wizziwig instance until the wizziwigpreinit event is
+ * called.  In some browsers, the initialization process may not happen
+ * synchronously.
+ *
+ * Events:
+ * wizziwigpreinit -- Called when editor iframe is loaded, but before any
+ *                    content is populated
+ * wizziwigpostinit -- Called after the editor iframe is populated with content
+ */
 (function()
 {
 	var WIDGET = {}
@@ -7,16 +19,43 @@
 	 */
 	WIDGET._create = function()
 	{
+		/**
+		 * Base container element that holds the Wizziwig UI.
+		 * @type jQuery
+		 */
 		this.container = $('<div>').addClass(this.widgetBaseClass);
+
+		/**
+		 * Menu toolbar list element.
+		 * @type jQuery
+		 */
 		this.menu = $('<ul>').appendTo(this.container);
-		this.iframe = $('<iframe>').appendTo(this.container);
 
-		// Insert everything now so that the iframe gets populated with a blank
-		// document
+		/**
+		 * The editor iframe that holds the area where content can be edited.
+		 * @type jQuery
+		 */
+		this.iframe = $();
+
+		/**
+		 * Shortcut for accessing the editor iframe's document object.
+		 * @type Document
+		 */
+		this.document = null;
+
+		/**
+		 * Shortcut for accessing the editor iframe's window object.
+		 * @type Window
+		 */
+		this.window = null
+
+		/**
+		 * Shortcut for accessing the editor iframe's <body> element.
+		 * @type jQuery
+		 */
+		this.body = $();
+
 		this.element.hide().after(this.container);
-
-		this.document = $(this.iframe.prop('contentDocument').documentElement);
-		this.body = $('body', this.document);
 	};
 
 	/**
@@ -24,12 +63,24 @@
 	 */
 	WIDGET._init = function()
 	{
-		this._trigger('preinit');
+		// Need to wait for load event -- Firefox replaces the iframe's document
+		// with a different one as it is loading about:blank, and it doesn't do
+		// this right away
+		var that = this;
 
-		$('body', this.document).append($(this.element.text()));
-		this.toggle();
+		this.iframe = $('<iframe>')
+			.on('load', function()
+			{
+				that.document = this.contentDocument;
+				that.window = this.contentWIndow;
+				that.body = $(that.document.body);
 
-		this._trigger('postinit');
+				that._trigger('preinit');
+				that.body.append($(that.element.text()));
+				that.toggle();
+				that._trigger('postinit');
+			})
+			.appendTo(this.container);
 	};
 
 	/**
