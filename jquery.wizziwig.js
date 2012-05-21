@@ -68,11 +68,14 @@
 		// this right away
 		var that = this;
 
+		// IE7 and IE8 need frameBorder to completely remove the border
 		this.iframe = $('<iframe>')
+			.attr('frameBorder', 0)
 			.on('load', function()
 			{
-				that.document = this.contentDocument;
-				that.window = this.contentWIndow;
+				// IE7 does not have contentDocument, only window.document
+				that.window = this.contentWindow;
+				that.document = that.window.document;
 				that.body = $(that.document.body);
 
 				that._trigger('preinit');
